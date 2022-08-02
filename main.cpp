@@ -813,6 +813,18 @@ void listAllFiles()
     }
 }
 
+void checkCluster()
+{
+    // Passos para encontrar a cadeia de cluster
+    //Achar se tem outro link para o próximo cluster no atual
+    //Usar o valor lido da FAT para ler o próximo setor
+    //Resumidademente
+    //1-Extrair o valor do FAT para o cluster _current_. (Use a seção anterior na Tabela de Alocação de Arquivos para obter detalhes sobre como exatamente extrair o valor.) goto número 2
+    //2-Este aglomerado está marcado como o último aglomerado da cadeia? (novamente, consulte a seção acima para obter mais detalhes) Sim, goto número 4. Não, goto número 3.
+    //3-Leia o cluster representado pelo valor extraído e retorne para mais análises de diretórios. 
+    //4-A extremidade da cadeia de aglomerados foi encontrada.
+}
+
 void menu()
 {
     while (1)
@@ -824,6 +836,7 @@ void menu()
         cout << "| 3 - Copiar arquivo do sistema de arquivos para o disco |" << endl;
         cout << "| 4 - Listar arquivos e diretorios                       |" << endl;
         cout << "| 5 - Criar diretorio                                    |" << endl;
+        cout << "| 6 - Verificar cadeias de cluster sem entradas          |" << endl;
         cout << "| 0 - Sair                                               |" << endl;
         cout << "|--------------------------------------------------------|" << endl;
         cout << "| Opcao desejada: ";
@@ -855,6 +868,11 @@ void menu()
         case 5:
             openImage();
             selectMkDirDestination();
+            fclose(file);
+            break;
+        case 6:
+            openImage();
+            checkCluster();
             fclose(file);
             break;
         case 0:
