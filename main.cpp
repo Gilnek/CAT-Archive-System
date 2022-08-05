@@ -9,6 +9,7 @@
 #include <math.h>
 #include <fcntl.h>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -867,7 +868,7 @@ void checkCluster()
         n++;
     }
 
-    for(auto &i : inicios) cout<< i << endl;
+    // for(auto &i : inicios) cout<< i << endl;
     std :: vector <std :: vector <short>> cadeias;
 
     for(auto &i : inicios)
@@ -887,13 +888,13 @@ void checkCluster()
         while(next != 0xFFFE)
         {
             //TODO Remover cadeia
-            cadeia.push_back(next);
+            //cadeia.push_back(next);
             visitados.push_back(next);
             next = searchInFAT(next);
         //    cout<< next << endl;
         }
-        for(auto &i : cadeia) cout<< i << ' ';
-        cout << endl;
+        // for(auto &i : cadeia) cout<< i << ' ';
+        // cout << endl;
     }
 
     //para cada item da fat
@@ -901,8 +902,31 @@ void checkCluster()
             //senao estiver nos visitados
                 //deu ruim
 
-    //for(auto & : )        
+    std:: vector <unsigned short> abandonados;
 
+    for(unsigned short i = 0; i < bootRecord.setores_fat; i++)
+    {
+        unsigned short curr = searchInFAT(i);
+        //verifica se curr está dentro de visitados
+        //caso não encontrado adicionar nos abandonados
+        auto ress = find(visitados.begin(), visitados.end(), curr);
+        
+        if(ress != visitados.end())//se ele encontrou alguma coisa
+        {
+            
+        }
+        else
+        {
+            abandonados.push_back(curr);
+            //cout << "não encontrou nada" << endl;
+            //não encontrou nada
+        }
+        
+
+    }      
+
+    cout<< "Foram encontrados " << abandonados.size() << " clusters abandonados" << endl;  
+    
     
 
 }
