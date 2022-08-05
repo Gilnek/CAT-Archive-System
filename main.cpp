@@ -8,6 +8,8 @@
 #include <fstream>
 #include <math.h>
 #include <fcntl.h>
+#include <vector>
+
 using namespace std;
 
 // Estrutura de uma entrada
@@ -813,6 +815,31 @@ void listAllFiles()
     }
 }
 
+
+void visit_entry(Entry entry, std :: vector <short> & visitado)
+{
+    if (entry.tipo != 0x10 && entry.tipo != 0x20)
+        return;
+
+    visitado.push_back(entry.primeiro_cluster);
+
+    if (entry.tipo == 0x10)
+    {
+        Entry curr;
+        curr.tipo = 0x10;
+        int n = 2;
+        int dirCluster = entry.primeiro_cluster;
+        while (curr.tipo != 0 && n < bootRecord.entradas_root)
+        {
+            fseek(file, (dirCluster * BYTES_PER_CLUSTER) + (n * sizeof(Entry)), SEEK_SET);
+            fread(&curr, sizeof(Entry), 1, file);
+            visit_entry(curr, visitado);
+            n++;
+        }
+    }
+    
+}
+
 void checkCluster()
 {
     // Passos para encontrar a cadeia de cluster
@@ -823,7 +850,63 @@ void checkCluster()
     //2-Este aglomerado está marcado como o último aglomerado da cadeia? (novamente, consulte a seção acima para obter mais detalhes) Sim, goto número 4. Não, goto número 3.
     //3-Leia o cluster representado pelo valor extraído e retorne para mais análises de diretórios. 
     //4-A extremidade da cadeia de aglomerados foi encontrada.
+
+    Entry curr;
+    curr.tipo = 0x10;
+    int n = 0;
+
+    std:: vector <short> inicios;
+
+    while (curr.tipo != 0 && n < bootRecord.entradas_root)
+    {
+        fseek(file, (START_ROOT_DIR * BYTES_PER_CLUSTER) + (n * sizeof(Entry)), SEEK_SET);
+        fread(&curr, sizeof(Entry), 1, file);
+        visit_entry(curr, inicios);
+        //cout << " Primeira entrada do cluster: "<< curr.primeiro_cluster << endl;
+        //inicios.push_back(curr.primeiro_cluster);
+        n++;
+    }
+
+    for(auto &i : inicios) cout<< i << endl;
+    std :: vector <std :: vector <short>> cadeias;
+
+    for(auto &i : inicios)
+    {
+        std:: vector <short> listinha;
+        listinha.push_back(i); //percorre a lista de inicios
+        cadeias.push_back(listinha); //pra cada intem de inicios ele ta colocando numa lista de listas
+    }
+
+    std :: vector <unsigned short> visitados;
+
+    for(auto &cadeia : cadeias)
+    {
+        short curr = cadeia[0];
+        //short next;
+        unsigned short next = searchInFAT(curr);
+        while(next != 0xFFFE)
+        {
+            //TODO Remover cadeia
+            cadeia.push_back(next);
+            visitados.push_back(next);
+            next = searchInFAT(next);
+        //    cout<< next << endl;
+        }
+        for(auto &i : cadeia) cout<< i << ' ';
+        cout << endl;
+    }
+
+    //para cada item da fat
+        //senao for vazio
+            //senao estiver nos visitados
+                //deu ruim
+
+    //for(auto & : )        
+
+    
+
 }
+
 
 void menu()
 {
