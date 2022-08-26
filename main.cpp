@@ -807,11 +807,13 @@ void listAllFiles()
     Entry curr;
     curr.tipo = 0x10;
     int n = 0;
-    while (curr.tipo != 0 && n < bootRecord.entradas_root)
+    while (n < bootRecord.entradas_root)
     {
         fseek(file, (START_ROOT_DIR * BYTES_PER_CLUSTER) + (n * sizeof(Entry)), SEEK_SET);
         fread(&curr, sizeof(Entry), 1, file);
-        printEntry(curr, 0);
+        if (curr.tipo != 0){
+            printEntry(curr, 0);
+        }
         n++;
     }
 }
@@ -858,7 +860,7 @@ void checkCluster()
 
     std:: vector <short> inicios;
 
-    while (curr.tipo != 0 && n < bootRecord.entradas_root)
+    while (n < bootRecord.entradas_root)
     {
         fseek(file, (START_ROOT_DIR * BYTES_PER_CLUSTER) + (n * sizeof(Entry)), SEEK_SET);
         fread(&curr, sizeof(Entry), 1, file);
@@ -868,34 +870,38 @@ void checkCluster()
         n++;
     }
 
-    // for(auto &i : inicios) cout<< i << endl;
-    std :: vector <std :: vector <short>> cadeias;
-
-    for(auto &i : inicios)
-    {
-        std:: vector <short> listinha;
-        listinha.push_back(i); //percorre a lista de inicios
-        cadeias.push_back(listinha); //pra cada intem de inicios ele ta colocando numa lista de listas
-    }
-
     std :: vector <unsigned short> visitados;
 
-    for(auto &cadeia : cadeias)
-    {
-        short curr = cadeia[0];
-        //short next;
+    for (auto &i : inicios) {
+
+        unsigned short curr = i;
+        visitados.push_back(curr);
+
         unsigned short next = searchInFAT(curr);
-        while(next != 0xFFFE)
+        while (next != 0xFFFE)
         {
-            //TODO Remover cadeia
-            //cadeia.push_back(next);
             visitados.push_back(next);
             next = searchInFAT(next);
-        //    cout<< next << endl;
         }
-        // for(auto &i : cadeia) cout<< i << ' ';
-        // cout << endl;
     }
+
+    // for(auto &cadeia : cadeias)
+    // {
+    //     short curr = cadeia[0];
+    //     //short next;
+    //     visitados.push_back(curr);
+    //     unsigned short next = searchInFAT(curr);
+    //     while(next != 0xFFFE)
+    //     {
+    //         //TODO Remover cadeia
+    //         //cadeia.push_back(next);
+    //         next = searchInFAT(next);
+    //         visitados.push_back(next);
+    //     //    cout<< next << endl;
+    //     }
+    //     // for(auto &i : cadeia) cout<< i << ' ';
+    //     // cout << endl;
+    // }
 
     //para cada item da fat
         //senao for vazio
@@ -903,21 +909,28 @@ void checkCluster()
                 //deu ruim
 
     std:: vector <unsigned short> abandonados;
+    cout<< inicios.size() << " entradas registradas" << endl; 
+    cout<< visitados.size() << " clusters visitados" << endl;
+    //for ( auto &i : visitados) cout << i << endl;
 
-    for(unsigned short i = 0; i < bootRecord.setores_fat; i++)
+    //unsigned short total_de_entradas = (bootRecord.bytes_por_setor/2) * bootRecord.setores_fat;//(bootRecord.setores_fat * bootRecord.bytes_por_setor)/2;
+    //cout << total_de_entradas << endl;
+    for(unsigned short i = 256 + 3; i < 0xFFFF; i++) //aqui
     {
         unsigned short curr = searchInFAT(i);
+
+        if (curr == 0xFFFF) continue;
+        if (curr == 0xFFFD) continue;
+        //if (curr == 0) continue;
         //verifica se curr está dentro de visitados
         //caso não encontrado adicionar nos abandonados
-        auto ress = find(visitados.begin(), visitados.end(), curr);
-        
-        if(ress != visitados.end())//se ele encontrou alguma coisa
+        // if (curr == 0xFFFE) cout << "eoc" << endl;
+        auto ress = find(visitados.begin(), visitados.end(), i);
+        if(ress == visitados.end())//se nao encontrou e nao reservado
         {
-            
-        }
-        else
-        {
-            abandonados.push_back(curr);
+            //cout << "[" << i << "] -> " << curr << endl;
+            // cout << curr << endl;
+            abandonados.push_back(i);
             //cout << "não encontrou nada" << endl;
             //não encontrou nada
         }
@@ -925,7 +938,7 @@ void checkCluster()
 
     }      
 
-    cout<< "Foram encontrados " << abandonados.size() << " clusters abandonados" << endl;  
+    cout<< " Foram encontrados " << abandonados.size() << " clusters abandonados" << endl;  
     
     
 
